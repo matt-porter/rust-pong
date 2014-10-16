@@ -1,0 +1,12 @@
+[root]
+name = "sdl2-pong"
+version = "0.0.1"
+dependencies = [
+ "sdl2 0.0.1-alpha.1 (git+https://github.com/AngryLawyer/rust-sdl2.git#f034cd774c9704d33ea35513e3f26396eb1e66e2)",
+]
+
+[[package]]
+name = "sdl2"
+version = "0.0.1-alpha.1"
+source = "git+https://github.com/AngryLawyer/rust-sdl2.git#f034cd774c9704d33ea35513e3f26396eb1e66e2"
+
