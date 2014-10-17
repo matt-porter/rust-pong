@@ -88,6 +88,7 @@ fn main() {
     let mut drawables: [&Renderable,..3] = [&l_bat as &Renderable,
                                        &r_bat as &Renderable,
                                        &ball as &Renderable];
+
     
     // start sdl2 with everything
     sdl2::init(sdl2::INIT_EVERYTHING);
