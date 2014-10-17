@@ -32,6 +32,10 @@ trait Renderable {
     fn draw(&self, renderer:  &sdl2::render::Renderer<Window>);
 }
 
+trait Movable {
+    fn update(&self);
+}
+
 // TODO: Transfer drawing responsibility to "Drawable" objects
 // TODO: define dy / dx in terms of time
 // TODO: Some keyboard inputs
@@ -70,6 +74,21 @@ impl Renderable for Background {
     }
 }
 
+impl Movable for Player {
+    fn update(&self) {
+        self.pos.x += self.mov.dx;
+        self.pos.y += self.mov.dy
+    }
+}
+
+impl Movable for Ball {
+    fn update(&self) {
+        self.pos.x += self.mov.dx;
+        self.pos.y += self.mov.dy
+    }
+}
+
+
 fn main() {
     // initialize our position variables
     let mut background = Background;
@@ -85,9 +104,17 @@ fn main() {
         pos: Position { x: 320-10, y: 240-10 }, 
         mov: Movement { dx: 1, dy: 1 },
     };
-    let mut drawables: [&Renderable,..3] = [&l_bat as &Renderable,
-                                       &r_bat as &Renderable,
-                                       &ball as &Renderable];
+    let mut renderables: [&Renderable,..4] = [
+        &background as &Renderable,
+        &l_bat as &Renderable,
+        &r_bat as &Renderable,
+        &ball as &Renderable
+    ];
+    let mut movables: [&Movable,..3] = [
+        &l_bat as &Movable,
+        &r_bat as &Movable,
+        &ball as &Movable
+    ];
 
     
     // start sdl2 with everything
@@ -105,20 +132,21 @@ fn main() {
         Err(err) => fail!("failed to create renderer: {}", err)
     };
 
-    background.draw(&renderer);
-    l_bat.draw(&renderer);
-    r_bat.draw(&renderer);
-    ball.draw(&renderer);
+    for r in renderables.iter() {
+        r.draw(&renderer)
+    }
 
     // loop until we receive a QuitEvent
     'event : loop {
         match poll_event() {
             QuitEvent(_) => break 'event,
             _            => {
-                background.draw(&renderer);
-                l_bat.draw(&renderer);
-                r_bat.draw(&renderer);
-                ball.draw(&renderer);
+                for m in movables.iter() {
+                    m.update()
+                }
+                for r in renderables.iter() {
+                    r.draw(&renderer)
+                }
                 let _ = renderer.present();
                 delay(16);
             }
