@@ -85,7 +85,9 @@ fn main() {
         pos: Position { x: 320-10, y: 240-10 }, 
         mov: Movement { dx: 1, dy: 1 },
     };
-    let mut drawables: [Renderable] = [l_bat, r_bat, ball];
+    let mut drawables: [&Renderable,..3] = [&l_bat as &Renderable,
+                                       &r_bat as &Renderable,
+                                       &ball as &Renderable];
     
     // start sdl2 with everything
     sdl2::init(sdl2::INIT_EVERYTHING);
