@@ -9,55 +9,84 @@ use sdl2::timer::{delay};
 struct Position {
     x: i32,
     y: i32,
+}
+
+struct Movement {
     dx: i32,
     dy: i32
 }
 
-fn update(pos: Position) -> Position {
-    Position { x: pos.x + pos.dx, y: pos.y + pos.dy, dx: pos.dx, dy: pos.dy }
+struct Player {
+    pos: Position,
+    mov: Movement
 }
 
-fn render(renderer: &sdl2::render::Renderer<Window>, l_bat_pos: Position, r_bat_pos: Position, ball_pos: Position) {
-        // Set the drawing csdl2::render::Rendererolor to a light blue.
-    let _ = renderer.set_draw_color(sdl2::pixels::RGB(101, 208, 246));
+struct Ball {
+    pos: Position,
+    mov: Movement
+}
 
-    // Clear the buffer, using the light blue color set above.
-    let _ = renderer.clear();
+struct Background;
 
-    // Set the drawing color to a darker blue.
-    let _ = renderer.set_draw_color(sdl2::pixels::RGB(0, 153, 204));
+trait Renderable {
+    fn draw(&self, renderer:  &sdl2::render::Renderer<Window>);
+}
 
-    // Create centered Rect, draw the outline of the Rect in our dark blue color.
-    let ball = Rect::new(ball_pos.x, ball_pos.y, 20, 20);
-    let _ = match renderer.fill_rect(&ball) {
-        Ok(_)    => {},
-        Err(err) => fail!("failed to draw rect: {}", err) 
-    };
+// TODO: Transfer drawing responsibility to "Drawable" objects
+// TODO: define dy / dx in terms of time
+// TODO: Some keyboard inputs
 
-    // Create a smaller centered Rect, filling it in the same dark blue.
-    let l_bat = Rect::new(l_bat_pos.x, l_bat_pos.y, 30, 120);
-    let _ = match renderer.fill_rect(&l_bat) {
-        Ok(_)    => {},
-        Err(err) => fail!("failed to draw rect: {}", err) 
-    };
+impl Renderable for Player {
+    fn draw(&self, renderer:  &sdl2::render::Renderer<Window>) {
+        // Set the drawing color to a darker blue.
+        let _ = renderer.set_draw_color(sdl2::pixels::RGB(0, 153, 204));
+        // Create a smaller centered Rect, filling it in the same dark blue.
+        let l_bat = Rect::new(self.pos.x, self.pos.y, 30, 120);
+        let _ = match renderer.fill_rect(&l_bat) {
+            Ok(_)    => {},
+            Err(err) => fail!("failed to draw rect: {}", err) 
+        };
+    }
+}
 
-    // Create a smaller centered Rect, filling it in the same dark blue.
-    let r_bat = Rect::new(r_bat_pos.x, r_bat_pos.y, 30, 120);
-    let _ = match renderer.fill_rect(&r_bat) {
-        Ok(_)    => {},
-        Err(err) => fail!("failed to draw rect: {}", err) 
-    };
+impl Renderable for Ball {
+    fn draw(&self, renderer: &sdl2::render::Renderer<Window>) {
+        // Set the drawing color to a darker blue.
+        let _ = renderer.set_draw_color(sdl2::pixels::RGB(0, 153, 204));
+        let ball = Rect::new(self.pos.x, self.pos.y, 20, 20);
+        let _ = match renderer.fill_rect(&ball) {
+            Ok(_)    => {},
+            Err(err) => fail!("failed to draw rect: {}", err) 
+        };
+    }
+}
 
-    // Swap our buffer for the present buffer, displaying it.
-    let _ = renderer.present();
+impl Renderable for Background {
+    fn draw(&self, renderer:  &sdl2::render::Renderer<Window>) {
+        let _ = renderer.set_draw_color(sdl2::pixels::RGB(101, 208, 246));
+
+        // Clear the buffer, using the light blue color set above.
+        let _ = renderer.clear();
+    }
 }
 
 fn main() {
     // initialize our position variables
-    let mut l_bat_pos = Position { x: 0, y: 240-60, dx: 0, dy: 0 };
-    let mut r_bat_pos = Position { x: 640-30, y: 240-60, dx: 0, dy: 0 };
-    let mut ball_pos  = Position { x: 320-10, y: 240-10, dx: 1, dy: 1 };
-
+    let mut background = Background;
+    let mut l_bat = Player { 
+        pos: Position { x: 0, y: 240-60 },
+        mov: Movement { dx: 0, dy: 0 }
+    };
+    let mut r_bat = Player {
+        pos: Position { x: 640-30, y: 240-60 },
+        mov: Movement { dx: 0, dy: 0 }
+    };
+    let mut ball = Ball { 
+        pos: Position { x: 320-10, y: 240-10 }, 
+        mov: Movement { dx: 1, dy: 1 },
+    };
+    let mut drawables: [Renderable] = [l_bat, r_bat, ball];
+    
     // start sdl2 with everything
     sdl2::init(sdl2::INIT_EVERYTHING);
 
@@ -73,17 +102,21 @@ fn main() {
         Err(err) => fail!("failed to create renderer: {}", err)
     };
 
-    render(&renderer, l_bat_pos, r_bat_pos, ball_pos);
+    background.draw(&renderer);
+    l_bat.draw(&renderer);
+    r_bat.draw(&renderer);
+    ball.draw(&renderer);
 
     // loop until we receive a QuitEvent
     'event : loop {
         match poll_event() {
             QuitEvent(_) => break 'event,
             _            => {
-                l_bat_pos = update(l_bat_pos);
-                r_bat_pos = update(r_bat_pos);
-                ball_pos  = update(ball_pos);
-                render(&renderer, l_bat_pos, r_bat_pos, ball_pos);
+                background.draw(&renderer);
+                l_bat.draw(&renderer);
+                r_bat.draw(&renderer);
+                ball.draw(&renderer);
+                let _ = renderer.present();
                 delay(16);
             }
         }
