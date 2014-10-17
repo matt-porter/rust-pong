@@ -30,10 +30,8 @@ struct Background;
 
 trait Renderable {
     fn draw(&self, renderer:  &sdl2::render::Renderer<Window>);
-}
 
-trait Movable {
-    fn update(&self);
+    fn update(& mut self);
 }
 
 // TODO: Transfer drawing responsibility to "Drawable" objects
@@ -51,6 +49,10 @@ impl Renderable for Player {
             Err(err) => fail!("failed to draw rect: {}", err) 
         };
     }
+    fn update(& mut self) {
+        self.pos.x += self.mov.dx;
+        self.pos.y += self.mov.dy
+    }
 }
 
 impl Renderable for Ball {
@@ -63,31 +65,31 @@ impl Renderable for Ball {
             Err(err) => fail!("failed to draw rect: {}", err) 
         };
     }
+    fn update(& mut self) {
+        self.pos.x += self.mov.dx;
+        self.pos.y += self.mov.dy
+    }
 }
 
 impl Renderable for Background {
-    fn draw(&self, renderer:  &sdl2::render::Renderer<Window>) {
+    fn draw(&self, renderer: &sdl2::render::Renderer<Window>) {
         let _ = renderer.set_draw_color(sdl2::pixels::RGB(101, 208, 246));
 
         // Clear the buffer, using the light blue color set above.
         let _ = renderer.clear();
     }
-}
 
-impl Movable for Player {
-    fn update(&self) {
-        self.pos.x += self.mov.dx;
-        self.pos.y += self.mov.dy
+    fn update(& mut self) {
+
     }
 }
 
-impl Movable for Ball {
-    fn update(&self) {
-        self.pos.x += self.mov.dx;
-        self.pos.y += self.mov.dy
+fn update_all(renderer: &sdl2::render::Renderer<Window>, renderables: &mut [&mut Renderable,..4]) {
+    for r in renderables.iter_mut() {
+        r.update();
+        r.draw(renderer);
     }
 }
-
 
 fn main() {
     // initialize our position variables
@@ -104,16 +106,11 @@ fn main() {
         pos: Position { x: 320-10, y: 240-10 }, 
         mov: Movement { dx: 1, dy: 1 },
     };
-    let mut renderables: [&Renderable,..4] = [
-        &background as &Renderable,
-        &l_bat as &Renderable,
-        &r_bat as &Renderable,
-        &ball as &Renderable
-    ];
-    let mut movables: [&Movable,..3] = [
-        &l_bat as &Movable,
-        &r_bat as &Movable,
-        &ball as &Movable
+    let renderables: &mut [&mut Renderable,..4] = &mut [
+        &mut background as &mut Renderable,
+        &mut l_bat as &mut Renderable,
+        &mut r_bat as &mut Renderable,
+        &mut ball as &mut Renderable
     ];
 
     
@@ -132,21 +129,16 @@ fn main() {
         Err(err) => fail!("failed to create renderer: {}", err)
     };
 
-    for r in renderables.iter() {
-        r.draw(&renderer)
-    }
+    // for r in renderables.iter() {
+    //     r.draw(&renderer)
+    // }
 
     // loop until we receive a QuitEvent
     'event : loop {
         match poll_event() {
             QuitEvent(_) => break 'event,
             _            => {
-                for m in movables.iter() {
-                    m.update()
-                }
-                for r in renderables.iter() {
-                    r.draw(&renderer)
-                }
+                update_all(&renderer, renderables);
                 let _ = renderer.present();
                 delay(16);
             }
