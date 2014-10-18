@@ -2,7 +2,7 @@ extern crate sdl2;
 extern crate native;
 
 use sdl2::video::{Window, PosCentered, OPENGL};
-use sdl2::event::{QuitEvent, poll_event};
+use sdl2::event::{QuitEvent, poll_event, KeyDownEvent};
 use sdl2::rect::{Rect};
 use sdl2::timer::{delay, get_ticks};
 use std::cmp::{max};
@@ -52,8 +52,12 @@ impl Renderable for Player {
     }
 
     fn update(& mut self, timestep: uint) {
+        if (self.pos.y <= 0.0 && self.mov.dy < 0.0) ||
+           (self.pos.y + 120.0 > 480.0 && self.mov.dy > 0.0) {
+            self.mov.dy = 0.0;
+        }
         self.pos.x += self.mov.dx;
-        self.pos.y += self.mov.dy
+        self.pos.y += self.mov.dy;
     }
 }
 
@@ -121,12 +125,6 @@ fn main() {
         pos: Position { x: 320.0-10.0, y: 240.0-10.0 }, 
         mov: Movement { dx: 0.2, dy: 0.2 },
     };
-    let renderables: &mut [&mut Renderable,..4] = &mut [
-        &mut background as &mut Renderable,
-        &mut l_bat as &mut Renderable,
-        &mut r_bat as &mut Renderable,
-        &mut ball as &mut Renderable
-    ];
 
     
     // start sdl2 with everything
@@ -151,13 +149,28 @@ fn main() {
     'event : loop {
         match poll_event() {
             QuitEvent(_) => break 'event,
-            _            => {
-                update_all(&renderer, renderables, current_time - last_time);
+            // KeyDownEvent(uint, video::Window, KeyCode, ScanCode, Mod),
+            KeyDownEvent(timestamp, window, keycode, scancode, modifier)
+                         => {
+                println!("key pressed: {}", keycode);
+                match keycode {
+                    sdl2::keycode::UpKey => l_bat.mov.dy = -4.0,
+                    sdl2::keycode::DownKey => l_bat.mov.dy = 4.0,
+                    _ => continue
+                }
+            }
+            NoEvent      => {
+                update_all(&renderer, &mut [
+                                        &mut background as &mut Renderable,
+                                        &mut l_bat as &mut Renderable,
+                                        &mut r_bat as &mut Renderable,
+                                        &mut ball as &mut Renderable
+                                    ], current_time - last_time);
                 let _ = renderer.present();
                 last_time = current_time;
                 current_time = get_ticks();
                 let sleep_time = max(0, target_frame_time as int - (current_time as int - last_time as int));
-                println!("Sleeping for {}", sleep_time);
+                // println!("Sleeping for {}", sleep_time);
                 delay(sleep_time as uint / 2); //not sleeping for the whole time gives a smoother result
             }
         }
