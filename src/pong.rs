@@ -35,9 +35,9 @@ trait Renderable {
     fn update(& mut self, timestep: uint);
 }
 
-// TODO: define dy / dx in terms of time
-// TODO: Some keyboard inputs 
-// TODO: Collision detection
+// TODO: Player-Ball Collision detection
+// TODO: Score when ball crosses line
+// TODO: vsync? Setting frame rate to something good?
 
 impl Renderable for Player {
     fn draw(&self, renderer:  &sdl2::render::Renderer<Window>) {
@@ -154,8 +154,8 @@ fn main() {
                          => {
                 println!("key pressed: {}", keycode);
                 match keycode {
-                    sdl2::keycode::UpKey => l_bat.mov.dy = -4.0,
-                    sdl2::keycode::DownKey => l_bat.mov.dy = 4.0,
+                    sdl2::keycode::UpKey => l_bat.mov.dy = -3.0,
+                    sdl2::keycode::DownKey => l_bat.mov.dy = 3.0,
                     _ => continue
                 }
             }
@@ -169,9 +169,9 @@ fn main() {
                 let _ = renderer.present();
                 last_time = current_time;
                 current_time = get_ticks();
+                 //not sleeping for the whole time gives a smoother result
                 let sleep_time = max(0, target_frame_time as int - (current_time as int - last_time as int));
-                // println!("Sleeping for {}", sleep_time);
-                delay(sleep_time as uint / 2); //not sleeping for the whole time gives a smoother result
+                delay(sleep_time as uint / 2);
             }
         }
     }
