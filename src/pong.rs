@@ -156,7 +156,7 @@ fn main() {
     };
 
     // Create a rendering context
-    let renderer = match sdl2::render::Renderer::from_window(window, sdl2::render::DriverAuto, sdl2::render::ACCELERATED) {
+    let renderer = match sdl2::render::Renderer::from_window(window, sdl2::render::DriverAuto, sdl2::render::ACCELERATED | sdl2::render::PRESENTVSYNC) {
         Ok(renderer) => renderer,
         Err(err) => fail!("failed to create renderer: {}", err)
     };
@@ -187,12 +187,6 @@ fn main() {
                 l_bat.draw(&renderer);
                 r_bat.draw(&renderer);
                 ball.draw(&renderer);
-                // update_all(&renderer, &mut [
-                //                         &mut background as &mut Renderable,
-                //                         &mut l_bat as &mut Renderable,
-                //                         &mut r_bat as &mut Renderable,
-                //                         &mut ball as &mut Renderable
-                //                     ], current_time - last_time);
                 let _ = renderer.present();
                 last_time = current_time;
                 current_time = get_ticks();
