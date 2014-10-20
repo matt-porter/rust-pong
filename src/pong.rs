@@ -31,8 +31,6 @@ struct Background;
 
 trait Renderable {
     fn draw(&self, renderer:  &sdl2::render::Renderer<Window>);
-
-    fn update(& mut self, timestep: uint);
 }
 
 // TODO: Player-Ball Collision detection
@@ -50,7 +48,9 @@ impl Renderable for Player {
             Err(err) => fail!("failed to draw rect: {}", err) 
         };
     }
+}
 
+impl Player {
     fn update(& mut self, timestep: uint) {
         if (self.pos.y <= 0.0 && self.mov.dy < 0.0) ||
            (self.pos.y + 120.0 > 480.0 && self.mov.dy > 0.0) {
@@ -71,14 +71,27 @@ impl Renderable for Ball {
             Err(err) => fail!("failed to draw rect: {}", err) 
         };
     }
+}
 
-    fn update(& mut self, timestep: uint) {
+impl Ball {
+    fn update(& mut self, timestep: uint, others: Vec<Player>) {
         // TODO: Hardcoded width is kinda ugly
         // TODO: Shouldn't bounce off the scoring wall
-        if (self.pos.x + 20.0 >= 640.0 && self.mov.dx > 0.0 )|| 
+        if (self.pos.x + 20.0 >= 640.0 && self.mov.dx > 0.0 ) || 
            (self.pos.x <= 0.0 && self.mov.dx < 0.0) {
-            self.mov.dx = -self.mov.dx;
+            self.mov.dx = 0.0;
+            self.mov.dy = 0.0;
+            return;
         }
+
+        for other in others.iter(){
+            if ((self.pos.x + 20.0 >= other.pos.x && self.mov.dx > 0.0 ) ||
+                (self.pos.x <= 30.0 && self.mov.dx < 0.0)) &&
+                self.pos.y > other.pos.y && self.pos.y < other.pos.y + 120.0 {
+                    self.mov.dx = -self.mov.dx;
+                }
+        }
+
         if (self.pos.y + 20.0 >= 480.0 && self.mov.dy > 0.0) || 
            (self.pos.y <= 0.0 && self.mov.dy < 0.0) {
             self.mov.dy = -self.mov.dy;
@@ -96,17 +109,6 @@ impl Renderable for Background {
 
         // Clear the buffer, using the light blue color set above.
         let _ = renderer.clear();
-    }
-
-    fn update(& mut self, timestep: uint) {
-
-    }
-}
-
-fn update_all(renderer: &sdl2::render::Renderer<Window>, renderables: &mut [&mut Renderable,..4], timestep: uint) {
-    for r in renderables.iter_mut() {
-        r.update(timestep);
-        r.draw(renderer);
     }
 }
 
@@ -160,12 +162,20 @@ fn main() {
                 }
             }
             NoEvent      => {
-                update_all(&renderer, &mut [
-                                        &mut background as &mut Renderable,
-                                        &mut l_bat as &mut Renderable,
-                                        &mut r_bat as &mut Renderable,
-                                        &mut ball as &mut Renderable
-                                    ], current_time - last_time);
+                let step = current_time - last_time;
+                l_bat.update(step);
+                r_bat.update(step);
+                ball.update(step, vec![l_bat, r_bat]);
+                background.draw(&renderer);
+                l_bat.draw(&renderer);
+                r_bat.draw(&renderer);
+                ball.draw(&renderer);
+                // update_all(&renderer, &mut [
+                //                         &mut background as &mut Renderable,
+                //                         &mut l_bat as &mut Renderable,
+                //                         &mut r_bat as &mut Renderable,
+                //                         &mut ball as &mut Renderable
+                //                     ], current_time - last_time);
                 let _ = renderer.present();
                 last_time = current_time;
                 current_time = get_ticks();
