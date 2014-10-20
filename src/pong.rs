@@ -181,8 +181,8 @@ fn main() {
             NoEvent      => {
                 let step = current_time - last_time;
                 l_bat.update(step);
-                r_bat.update(step);
                 ball.update(step, vec![l_bat, r_bat]);
+                r_bat.pos.y = ball.pos.y;
                 background.draw(&renderer);
                 l_bat.draw(&renderer);
                 r_bat.draw(&renderer);
