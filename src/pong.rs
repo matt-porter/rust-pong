@@ -31,6 +31,7 @@ struct Background;
 
 trait Renderable {
     fn draw(&self, renderer:  &sdl2::render::Renderer<Window>);
+    fn get_rect(&self) -> sdl2::rect::Rect;
 }
 
 // TODO: Player-Ball Collision detection
@@ -42,11 +43,15 @@ impl Renderable for Player {
         // Set the drawing color to a darker blue.
         let _ = renderer.set_draw_color(sdl2::pixels::RGB(0, 153, 204));
         // Create a smaller centered Rect, filling it in the same dark blue.
-        let l_bat = Rect::new(self.pos.x as i32, self.pos.y as i32, 30, 120);
+        let l_bat = self.get_rect();
         let _ = match renderer.fill_rect(&l_bat) {
             Ok(_)    => {},
             Err(err) => fail!("failed to draw rect: {}", err) 
         };
+    }
+
+    fn get_rect(&self) -> sdl2::rect::Rect {
+        return Rect::new(self.pos.x as i32, self.pos.y as i32, 30, 120);
     }
 }
 
@@ -59,17 +64,22 @@ impl Player {
         self.pos.x += self.mov.dx;
         self.pos.y += self.mov.dy;
     }
+
 }
 
 impl Renderable for Ball {
     fn draw(&self, renderer: &sdl2::render::Renderer<Window>) {
         // Set the drawing color to a darker blue.
         let _ = renderer.set_draw_color(sdl2::pixels::RGB(0, 153, 204));
-        let ball = Rect::new(self.pos.x as i32, self.pos.y as i32, 20, 20);
+        let ball = self.get_rect();
         let _ = match renderer.fill_rect(&ball) {
             Ok(_)    => {},
             Err(err) => fail!("failed to draw rect: {}", err) 
         };
+    }
+
+    fn get_rect(&self) -> sdl2::rect::Rect {
+         return Rect::new(self.pos.x as i32, self.pos.y as i32, 20, 20);
     }
 }
 
@@ -85,11 +95,9 @@ impl Ball {
         }
 
         for other in others.iter(){
-            if ((self.pos.x + 20.0 >= other.pos.x && self.mov.dx > 0.0 ) ||
-                (self.pos.x <= 30.0 && self.mov.dx < 0.0)) &&
-                self.pos.y > other.pos.y && self.pos.y < other.pos.y + 120.0 {
-                    self.mov.dx = -self.mov.dx;
-                }
+            if self.collide(other) {
+                self.mov.dx = -self.mov.dx;
+            }
         }
 
         if (self.pos.y + 20.0 >= 480.0 && self.mov.dy > 0.0) || 
@@ -99,7 +107,12 @@ impl Ball {
 
         self.pos.x += self.mov.dx * timestep as f32;
         self.pos.y += self.mov.dy * timestep as f32;
+    }
 
+    fn collide(&self, other: &Player) -> bool {
+        let self_r = self.get_rect();
+        let other_r = other.get_rect();
+        return self_r.has_intersection(&other_r);
     }
 }
 
@@ -109,6 +122,10 @@ impl Renderable for Background {
 
         // Clear the buffer, using the light blue color set above.
         let _ = renderer.clear();
+    }
+
+    fn get_rect(&self) -> sdl2::rect::Rect {
+        return Rect::new(0, 0, 640, 480);
     }
 }
 
@@ -120,7 +137,7 @@ fn main() {
         mov: Movement { dx: 0.0, dy: 0.0 }
     };
     let mut r_bat = Player {
-        pos: Position { x: 640.0-30.0, y: 240.0-60.0 },
+        pos: Position { x: 640.0-30.0, y: 350.0-60.0 },
         mov: Movement { dx: 0.0, dy: 0.0 }
     };
     let mut ball = Ball { 
